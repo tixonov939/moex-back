@@ -375,6 +375,11 @@
   font-weight: 600;
 }
 
+.topDividendMark {
+  font-size: 12px;
+  color: rgba(71, 85, 105, 0.82);
+}
+
 .sparkline {
   display: flex;
   align-items: flex-end;
@@ -418,6 +423,12 @@
   width: 8px;
   border-radius: 999px;
   background: rgba(226, 232, 240, 0.85);
+}
+
+.topFootnote {
+  margin-top: 10px;
+  font-size: 12px;
+  color: rgba(71, 85, 105, 0.82);
 }
 
 .skeletonBar:nth-child(1) { height: 16px; }

@@ -25,8 +25,11 @@ type BacktestPoint = {
   date: string;
   stock: number;
   imoex: number;
+  stockPrice: number;
+  imoexLevel: number;
   stockValue: number;
   imoexValue: number;
+  comparisonPrice?: number;
   comparison?: number;
   comparisonValue?: number;
 };
@@ -49,6 +52,7 @@ type TopStockItem = {
   shortname: string;
   currentPrice: number;
   returnPct: number;
+  hasDividends: boolean;
   sparkline: number[];
 };
 
@@ -65,6 +69,13 @@ type DropdownPosition = {
 
 function formatRubles(value: number) {
   return `${value.toLocaleString("ru-RU")} ₽`;
+}
+
+function formatPriceRubles(value: number) {
+  return `${value.toLocaleString("ru-RU", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  })} ₽`;
 }
 
 function formatSignedRubles(value: number) {
@@ -130,12 +141,26 @@ function mergeComparisonPoints(primaryPoints: BacktestPoint[], comparisonPoints:
     return {
       ...point,
       comparison: comparisonPoint?.stock,
+      stockPrice: point.stockPrice,
+      stockValue: point.stockValue,
+      imoexLevel: point.imoexLevel,
+      imoexValue: point.imoexValue,
+      comparisonPrice: comparisonPoint?.stockPrice,
       comparisonValue: comparisonPoint?.stockValue
     };
   });
 }
 
-function ChartTooltip({ active, payload, label }: TooltipProps<ValueType, NameType>) {
+function ChartTooltip({
+  active,
+  payload,
+  label,
+  primaryTicker,
+  comparisonTicker
+}: TooltipProps<ValueType, NameType> & {
+  primaryTicker?: string;
+  comparisonTicker?: string;
+}) {
   if (!active || !payload?.length || typeof label !== "string") {
     return null;
   }
@@ -157,23 +182,35 @@ function ChartTooltip({ active, payload, label }: TooltipProps<ValueType, NameTy
       <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 8 }}>{formatDateLabel(label)}</div>
       {payload.map((entry) => {
         const dataKey = String(entry.dataKey);
-        const normalizedValue = typeof entry.value === "number" ? entry.value : Number(entry.value);
-        const actualValue =
-          dataKey === "stock"
-            ? point.stockValue
-            : dataKey === "comparison"
-              ? point.comparisonValue
-              : point.imoexValue;
-
-        if (Number.isNaN(normalizedValue) || typeof actualValue !== "number") {
-          return null;
+        if (dataKey === "stock" && typeof point.stockPrice === "number" && typeof point.stockValue === "number") {
+          return (
+            <div key={dataKey} style={{ fontSize: 13 }}>
+              {primaryTicker ?? entry.name}: {formatPriceRubles(point.stockPrice)} (итого {formatRubles(point.stockValue)})
+            </div>
+          );
         }
 
-        return (
-          <div key={dataKey} style={{ fontSize: 13 }}>
-            {entry.name}: {normalizedValue.toLocaleString("ru-RU")} ({formatRubles(actualValue)})
-          </div>
-        );
+        if (
+          dataKey === "comparison" &&
+          typeof point.comparisonPrice === "number" &&
+          typeof point.comparisonValue === "number"
+        ) {
+          return (
+            <div key={dataKey} style={{ fontSize: 13 }}>
+              {comparisonTicker ?? entry.name}: {formatPriceRubles(point.comparisonPrice)} (итого {formatRubles(point.comparisonValue)})
+            </div>
+          );
+        }
+
+        if (dataKey === "imoex" && typeof point.imoexLevel === "number") {
+          return (
+            <div key={dataKey} style={{ fontSize: 13 }}>
+              IMOEX: {point.imoexLevel.toLocaleString("ru-RU", { maximumFractionDigits: 2 })}
+            </div>
+          );
+        }
+
+        return null;
       })}
     </div>
   );
@@ -793,6 +830,7 @@ export default function HomePage() {
                           <td>{formatRubles(item.currentPrice)}</td>
                           <td className={isPositive ? styles.topPositive : styles.topNegative}>
                             {formatPercent(item.returnPct)}
+                            {item.hasDividends ? <span className={styles.topDividendMark}> ✦</span> : null}
                           </td>
                           <td>
                             <div className={styles.sparkline} aria-hidden="true">
@@ -814,6 +852,7 @@ export default function HomePage() {
             </table>
           )}
         </div>
+        {!topError ? <div className={styles.topFootnote}>✦ доходность с учётом дивидендов</div> : null}
       </section>
     );
   }
@@ -1072,7 +1111,14 @@ export default function HomePage() {
                         tick={{ fontSize: 12 }}
                         tickFormatter={(value: number) => `${value.toFixed(0)}`}
                       />
-                      <Tooltip content={<ChartTooltip />} />
+                      <Tooltip
+                        content={
+                          <ChartTooltip
+                            primaryTicker={selectedStock?.ticker}
+                            comparisonTicker={comparisonStock?.ticker}
+                          />
+                        }
+                      />
                       <Legend />
                       <Line
                         type="monotone"
@@ -1207,7 +1253,14 @@ export default function HomePage() {
                         tick={{ fontSize: 12 }}
                         tickFormatter={(value: number) => `${value.toFixed(0)}`}
                       />
-                      <Tooltip content={<ChartTooltip />} />
+                      <Tooltip
+                        content={
+                          <ChartTooltip
+                            primaryTicker={selectedStock?.ticker}
+                            comparisonTicker={comparisonStock?.ticker}
+                          />
+                        }
+                      />
                       <Legend />
                       <Line
                         type="monotone"

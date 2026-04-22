@@ -1,9 +1,9 @@
 {
   "/_not-found/page": "app/_not-found/page.js",
   "/page": "app/page.js",
+  "/api/search/route": "app/api/search/route.js",
   "/api/backtest/route": "app/api/backtest/route.js",
   "/api/first-trade/[ticker]/route": "app/api/first-trade/[ticker]/route.js",
-  "/api/search/route": "app/api/search/route.js",
-  "/api/top/route": "app/api/top/route.js",
-  "/api/dividends/route": "app/api/dividends/route.js"
+  "/api/dividends/route": "app/api/dividends/route.js",
+  "/api/top/route": "app/api/top/route.js"
 }
