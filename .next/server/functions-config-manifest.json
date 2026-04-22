@@ -1,1 +1,1 @@
-{"version":1,"functions":{"/api/first-trade/[ticker]":{},"/api/top":{},"/api/backtest":{},"/api/dividends":{},"/api/search":{}}}
+{"version":1,"functions":{"/api/first-trade/[ticker]":{},"/api/search":{},"/api/top":{},"/api/backtest":{},"/api/dividends":{}}}

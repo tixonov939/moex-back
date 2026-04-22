@@ -538,6 +538,27 @@ export default function HomePage() {
     };
   }, [comparisonMode, comparisonResult, comparisonStock, result, selectedStock]);
 
+  const comparisonLineColors = useMemo(() => {
+    if (!comparisonMode || !result || !comparisonResult) {
+      return {
+        primary: "#111111",
+        comparison: "#D85A30"
+      };
+    }
+
+    if (result.finalAmount >= comparisonResult.finalAmount) {
+      return {
+        primary: "#0F6E56",
+        comparison: "#A32D2D"
+      };
+    }
+
+    return {
+      primary: "#A32D2D",
+      comparison: "#0F6E56"
+    };
+  }, [comparisonMode, comparisonResult, result]);
+
   async function fetchFirstTradeDate(ticker: string) {
     const response = await fetch(`/api/first-trade/${ticker}`);
     const payload = (await response.json()) as { firstTradeDate?: string; error?: string };
@@ -1265,7 +1286,7 @@ export default function HomePage() {
                       <Line
                         type="monotone"
                         dataKey="stock"
-                        stroke="#111111"
+                        stroke={comparisonLineColors.primary}
                         strokeWidth={2}
                         dot={false}
                         name={selectedStock?.ticker ?? "Первая акция"}
@@ -1273,7 +1294,7 @@ export default function HomePage() {
                       <Line
                         type="monotone"
                         dataKey="comparison"
-                        stroke="#D85A30"
+                        stroke={comparisonLineColors.comparison}
                         strokeWidth={2}
                         dot={false}
                         name={comparisonStock?.ticker ?? "Вторая акция"}
