@@ -151,6 +151,72 @@ function mergeComparisonPoints(primaryPoints: BacktestPoint[], comparisonPoints:
   });
 }
 
+function getWeekKey(date: string) {
+  const value = new Date(`${date}T00:00:00`);
+  const day = (value.getDay() + 6) % 7;
+  value.setDate(value.getDate() - day);
+  return value.toISOString().slice(0, 10);
+}
+
+function averageNumber(values: number[]) {
+  return Number((values.reduce((sum, value) => sum + value, 0) / values.length).toFixed(2));
+}
+
+function aggregateWeeklyPoints(points: BacktestPoint[]) {
+  if (points.length <= 14) {
+    return points;
+  }
+
+  const grouped = new Map<string, BacktestPoint[]>();
+
+  points.forEach((point) => {
+    const key = getWeekKey(point.date);
+    const bucket = grouped.get(key);
+
+    if (bucket) {
+      bucket.push(point);
+      return;
+    }
+
+    grouped.set(key, [point]);
+  });
+
+  return Array.from(grouped.entries()).map(([weekStart, bucket]) => {
+    const numericValues = {
+      stock: bucket.map((point) => point.stock),
+      imoex: bucket.map((point) => point.imoex),
+      stockPrice: bucket.map((point) => point.stockPrice),
+      imoexLevel: bucket.map((point) => point.imoexLevel),
+      stockValue: bucket.map((point) => point.stockValue),
+      imoexValue: bucket.map((point) => point.imoexValue),
+      comparison: bucket.flatMap((point) => (typeof point.comparison === "number" ? [point.comparison] : [])),
+      comparisonPrice: bucket.flatMap((point) =>
+        typeof point.comparisonPrice === "number" ? [point.comparisonPrice] : []
+      ),
+      comparisonValue: bucket.flatMap((point) =>
+        typeof point.comparisonValue === "number" ? [point.comparisonValue] : []
+      )
+    };
+
+    return {
+      date: weekStart,
+      stock: averageNumber(numericValues.stock),
+      imoex: averageNumber(numericValues.imoex),
+      stockPrice: averageNumber(numericValues.stockPrice),
+      imoexLevel: averageNumber(numericValues.imoexLevel),
+      stockValue: averageNumber(numericValues.stockValue),
+      imoexValue: averageNumber(numericValues.imoexValue),
+      comparison: numericValues.comparison.length ? averageNumber(numericValues.comparison) : undefined,
+      comparisonPrice: numericValues.comparisonPrice.length
+        ? averageNumber(numericValues.comparisonPrice)
+        : undefined,
+      comparisonValue: numericValues.comparisonValue.length
+        ? averageNumber(numericValues.comparisonValue)
+        : undefined
+    };
+  });
+}
+
 function ChartTooltip({
   active,
   payload,
@@ -256,9 +322,23 @@ export default function HomePage() {
   const [portalReady, setPortalReady] = useState(false);
   const [primaryDropdownPosition, setPrimaryDropdownPosition] = useState<DropdownPosition | null>(null);
   const [comparisonDropdownPosition, setComparisonDropdownPosition] = useState<DropdownPosition | null>(null);
+  const [isCompactScreen, setIsCompactScreen] = useState(false);
 
   useEffect(() => {
     setPortalReady(true);
+  }, []);
+
+  useEffect(() => {
+    function updateCompactScreen() {
+      setIsCompactScreen(window.innerWidth <= 480);
+    }
+
+    updateCompactScreen();
+    window.addEventListener("resize", updateCompactScreen);
+
+    return () => {
+      window.removeEventListener("resize", updateCompactScreen);
+    };
   }, []);
 
   useEffect(() => {
@@ -495,10 +575,10 @@ export default function HomePage() {
     }
 
     if (!comparisonResult) {
-      return result.points;
+      return aggregateWeeklyPoints(result.points);
     }
 
-    return mergeComparisonPoints(result.points, comparisonResult.points);
+    return aggregateWeeklyPoints(mergeComparisonPoints(result.points, comparisonResult.points));
   }, [result, comparisonResult]);
 
   const winner = useMemo(() => {
@@ -1116,12 +1196,13 @@ export default function HomePage() {
                   <p className={styles.chartTitle}>
                     Динамика с {formatDateLabel(result.startDate)} по {formatDateLabel(result.endDate)}
                   </p>
-                  <ResponsiveContainer width="100%" height={420}>
+                  <ResponsiveContainer width="100%" height={isCompactScreen ? 320 : 420}>
                     <LineChart data={comparisonChartData} margin={{ top: 8, right: 8, left: 0, bottom: 8 }}>
                       <CartesianGrid stroke="#e5e7eb" vertical={false} />
                       <XAxis
                         dataKey="date"
-                        minTickGap={32}
+                        minTickGap={isCompactScreen ? 56 : 32}
+                        interval={isCompactScreen ? 3 : "preserveStartEnd"}
                         tickFormatter={(value: string) => formatDateLabel(value)}
                         stroke="#6b7280"
                         tick={{ fontSize: 12 }}
@@ -1258,12 +1339,13 @@ export default function HomePage() {
                   <p className={styles.chartTitle}>
                     Динамика с {formatDateLabel(result.startDate)} по {formatDateLabel(result.endDate)}
                   </p>
-                  <ResponsiveContainer width="100%" height={420}>
+                  <ResponsiveContainer width="100%" height={isCompactScreen ? 320 : 420}>
                     <LineChart data={comparisonChartData} margin={{ top: 8, right: 8, left: 0, bottom: 8 }}>
                       <CartesianGrid stroke="#e5e7eb" vertical={false} />
                       <XAxis
                         dataKey="date"
-                        minTickGap={32}
+                        minTickGap={isCompactScreen ? 56 : 32}
+                        interval={isCompactScreen ? 3 : "preserveStartEnd"}
                         tickFormatter={(value: string) => formatDateLabel(value)}
                         stroke="#6b7280"
                         tick={{ fontSize: 12 }}

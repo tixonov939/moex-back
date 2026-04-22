@@ -640,3 +640,91 @@
     padding: 18px 16px 8px;
   }
 }
+
+@media (max-width: 480px) {
+  .headerInner {
+    padding: 18px 16px;
+  }
+
+  .subtitle {
+    display: none;
+  }
+
+  .tabs {
+    padding: 0 16px;
+    gap: 18px;
+  }
+
+  .main {
+    padding: 24px 16px 64px;
+  }
+
+  .formWrap {
+    width: 100%;
+    padding: 16px;
+  }
+
+  .input,
+  .button {
+    width: 100%;
+  }
+
+  .helper {
+    margin-top: 20px;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  .card,
+  .chartWrap {
+    border-radius: 16px;
+  }
+
+  .card {
+    padding: 18px;
+  }
+
+  .cardValue {
+    font-size: 22px;
+  }
+
+  .comparisonTicker {
+    font-size: 22px;
+  }
+
+  .comparisonReturn {
+    font-size: 20px;
+  }
+
+  .chartTitle {
+    font-size: 13px;
+  }
+
+  .topTitle {
+    font-size: 24px;
+  }
+
+  .topTable {
+    min-width: 0;
+  }
+
+  .topTableWrap {
+    overflow: hidden;
+  }
+
+  .topTable th,
+  .topTable td {
+    padding: 14px 12px;
+  }
+
+  .topTable th:first-child,
+  .topTable td:first-child,
+  .topTable th:last-child,
+  .topTable td:last-child {
+    display: none;
+  }
+
+  .topName {
+    font-size: 12px;
+  }
+}
